@@ -45,7 +45,6 @@ class Test:
             )
             e_time = time()
         except(CalledProcessError):
-            print("Warning: Failed a test: {test}.\n".format(test=test))
             raise SHTestException("ERROR: Test failure: {test}".format(test=test))
             return False
         return round((e_time - s_time), 3)
@@ -54,7 +53,10 @@ class Test:
         '''simulate the tests n times, updates the scores dict '''
         for i in range(ntests):
             for x in self.tests:
-                res = self.run(self.tests[x])
+                try:
+                    res = self.run(self.tests[x])
+                except(SHTestException):
+                    return False
                 if x in self.scores:
                     self.scores[x].append(res)
                 else:
@@ -73,13 +75,17 @@ class Test:
                 self.averages[x] = round((sum / its), 4)
             except(TypeError):
                 raise SHExecException("ERROR: Found bad test data while attempting to average.")
-                return(False)
+                return False
         return self.averages
 
     def test(self, ntests):
        '''high level function to simulate and return averages'''
-       raw = self.sim(ntests)
-       return self.avg()
+       try:
+           raw = self.sim(ntests)
+           avgs = self.avg()
+       except(SHTestException) as retval:
+            return False
+       return avgs
         
 
     ##def __del__(self):
